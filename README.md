@@ -11,32 +11,38 @@ A fast **RAM-only**, **k32-only**, Chia plotter.
 This repository depends on Chia's [bls-signatures](https://github.com/Chia-Network/bls-signatures) repository to generate keys and plot ids, which requires [Cmake](https://cmake.org/). At the time of this writing **Cmake 3.14+** is required by bls-signatures. See the repository for any updated build instructions.
 
 64-bit is supported only, for obvious reasons.
-Only Linux is currently completed. There are several platform abstractions missing for macOS and Windows.
+Only Linux is currently completed. There are several platform abstractions misisng for macOS and Windows.
 
-### Build & Install
-<details>
-  <summary>Ubuntu 20.04</summary>
-  
-  ```bash
-  # install build toolkit and NUMA library
-  sudo apt update && sudo apt install cmake build-essential libnuma-dev -y
+**Linux**
+> *NOTE: Some repositories may have cmake versions not compatible with BLS, in which case you would have to build & install Cmake yourself.*
 
-  # Clone the repo & its submodules and switch to repo folder
-  git clone --recursive https://github.com/harold-b/bladebit.git && cd bladebit
-  
-  # Build bls library. Only needs to be done once.
-  ./build-bls
+```
+# CentOS or Amazon Linux
+sudo yum install -y cmake numactl-devel
+```
 
-  # Build for x86
-  make clean && make -j$(nproc --all)
 
-  # Build for ARM
-  make clean && make -j$(nproc --all) CONFIG=release.arm
+### Build
 
-  ```
-  
-  The result binaries will be in `.bin/release` folder.
-</details>
+> *NOTE: BLS/Relic is currently not compatible with GCC 11*
+
+
+Install pre-requisites then run:
+
+**Linux**
+```bash
+# Clone the repo & its submodules
+git clone --recursive https://github.com/harold-b/bladebit.git
+
+# Build bls library. Only needs to be done once.
+./build-bls
+
+# For x86
+make clean && make -j$(nproc --all)
+
+# For ARM
+make clean && make -j$(nproc --all) CONFIG=release.arm
+```
 
 ## Usage
 Run `bladebit -h` for usage and command line options.
