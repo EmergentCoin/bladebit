@@ -3,6 +3,7 @@
 #include <string>
 #include <thread>
 
+#include "Version.h"
 #include "Util.h"
 #include "util/Log.h"
 #include "SysHost.h"
@@ -21,6 +22,9 @@ extern "C" {
 #include "bls/schemes.hpp"
 #include "bls/util.hpp"
 #pragma GCC diagnostic pop
+
+#define PLOT_FILE_PREFIX_LEN (sizeof("plot-k32-2021-08-05-18-55-")-1)
+#define PLOT_FILE_FMT_LEN (sizeof( "/plot-k32-2021-08-05-18-55-77a011fc20f0003c3adcc739b615041ae56351a22b690fd854ccb6726e5f43b7.plot.tmp" ))
 
 /// Internal Data Structures
 struct Config
@@ -101,6 +105,7 @@ OPTIONS:
                         If you set this parameter in a NUMA system you
                         will likely get degraded performance.
 
+ --version            : Display current version.
 )";
 
 
@@ -116,7 +121,8 @@ int main( int argc, const char* argv[] )
 
     // Create the plot output path
     size_t outputFolderLen = strlen( cfg.outputFolder );
-    char*  plotOutPath     = new char[outputFolderLen + 64+6+1];
+    
+    char* plotOutPath = new char[outputFolderLen + PLOT_FILE_FMT_LEN];
 
     if( outputFolderLen )
     {
@@ -126,9 +132,6 @@ int main( int argc, const char* argv[] )
         if( plotOutPath[outputFolderLen-1] != '/' )
             plotOutPath[outputFolderLen++] = '/';
     }
-
-    memcpy( plotOutPath+outputFolderLen+64, ".plot", sizeof( ".plot" ) );
-    
 
     // Begin plotting
     PlotRequest req;
@@ -160,7 +163,17 @@ int main( int argc, const char* argv[] )
         }
 
         // Set the output path
-        memcpy( plotOutPath+outputFolderLen, plotIdStr, 64 );
+        {
+            time_t     now = time( nullptr  );
+            struct tm* t   = localtime( &now ); ASSERT( t );
+            
+            const size_t r = strftime( plotOutPath + outputFolderLen, PLOT_FILE_FMT_LEN, "plot-k32-%Y-%m-%d-%H-%M-", t );
+            if( r != PLOT_FILE_PREFIX_LEN )
+                Fatal( "Failed to generate plot file." );
+
+            memcpy( plotOutPath + outputFolderLen + PLOT_FILE_PREFIX_LEN     , plotIdStr, 64 );
+            memcpy( plotOutPath + outputFolderLen + PLOT_FILE_PREFIX_LEN + 64, ".plot.tmp", sizeof( ".plot.tmp" ) );
+        }
 
         Log::Line( "Generating plot %d / %d: %s", i+1, cfg.plotCount, plotIdStr );
         Log::Line( "" );
@@ -294,6 +307,11 @@ void ParseCommandLine( int argc, const char* argv[], Config& cfg )
         else if( check( "-v" ) || check( "--verbose" ) )
         {
             Log::SetVerbose( true );
+        }
+        else if( check( "--version" ) )
+        {
+            Log::Line( BLADEBIT_VERSION_STR );
+            exit( 0 );
         }
         else
         {
